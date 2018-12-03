@@ -42,6 +42,7 @@ import static com.bluebead38.opencvtesseractocr.MainActivity.sTess;
 public class CameraView extends Activity implements CameraBridgeViewBase.CvCameraViewListener2 {
 
     private Mat img_input;
+    private Mat img_output;
     private static final String TAG = "opencv";
     private CameraBridgeViewBase mOpenCvCameraView;
     private String m_strOcrResult = "";
@@ -82,14 +83,10 @@ public class CameraView extends Activity implements CameraBridgeViewBase.CvCamer
     static final int PERMISSION_REQUEST_CODE = 1;
     String[] PERMISSIONS = {"android.permission.CAMERA"};
 
-    /*
-    // cpp 관련 부분. 지금은 필요하지 않음
     static {
         System.loadLibrary("opencv_java3");
         System.loadLibrary("native-lib");
-        System.loadLibrary("imported-lib");
     }
-    */
 
     private boolean hasPermissions(String[] permissions) {
         // 퍼미션 확인
@@ -173,7 +170,6 @@ public class CameraView extends Activity implements CameraBridgeViewBase.CvCamer
         mTextOcrResult = (TextView) findViewById(R.id.text_ocrresult);
 
         mSurfaceRoi = (SurfaceView) findViewById(R.id.surface_roi);
-        mSurfaceRoiBorder = (SurfaceView) findViewById(R.id.surface_roi_border);
 
         mImageCapture = (ImageView) findViewById(R.id.image_capture);
 
@@ -216,17 +212,10 @@ public class CameraView extends Activity implements CameraBridgeViewBase.CvCamer
                     mCurrOrientHomeButton = mOrientHomeButton.Right;
                 }
 
-
-                //ROI 선 조정
-                mRelativeParams = new RelativeLayout.LayoutParams(mRoiWidth + 5, mRoiHeight + 5);
-                mRelativeParams.setMargins(mRoiX, mRoiY, 0, 0);
-                mSurfaceRoiBorder.setLayoutParams(mRelativeParams);
-
                 //ROI 영역 조정
                 mRelativeParams = new RelativeLayout.LayoutParams(mRoiWidth - 5, mRoiHeight - 5);
                 mRelativeParams.setMargins(mRoiX + 5, mRoiY + 5, 0, 0);
                 mSurfaceRoi.setLayoutParams(mRelativeParams);
-
             }
         };
 
@@ -254,10 +243,10 @@ public class CameraView extends Activity implements CameraBridgeViewBase.CvCamer
                     mBtnOcrStart.setEnabled(false);
                     mBtnOcrStart.setText("Working...");
                     mBtnOcrStart.setTextColor(Color.LTGRAY);
+                    imageprocessing(img_input.getNativeObjAddr());
+                    bmp_result = Bitmap.createBitmap(img_input.cols(), img_input.rows(), Bitmap.Config.ARGB_8888);
 
-                    bmp_result = Bitmap.createBitmap(m_matRoi.cols(), m_matRoi.rows(), Bitmap.Config.ARGB_8888);
-
-                    Utils.matToBitmap(m_matRoi, bmp_result);
+                    Utils.matToBitmap(img_input, bmp_result);
 
                     // 캡쳐한 이미지를 ROI 영역 안에 표시
                     mImageCapture.setVisibility(View.VISIBLE);
@@ -436,12 +425,6 @@ public class CameraView extends Activity implements CameraBridgeViewBase.CvCamer
         // ROI 영역 생성
         mRectRoi = new Rect(mRoiX, mRoiY, mRoiWidth, mRoiHeight);
 
-
-        // ROI 영역 흑백으로 전환
-        m_matRoi = img_input.submat(mRectRoi);
-        Imgproc.cvtColor(m_matRoi, m_matRoi, Imgproc.COLOR_RGBA2GRAY);
-        Imgproc.cvtColor(m_matRoi, m_matRoi, Imgproc.COLOR_GRAY2RGBA);
-        m_matRoi.copyTo(img_input.submat(mRectRoi));
         return img_input;
     }
 
@@ -470,4 +453,5 @@ public class CameraView extends Activity implements CameraBridgeViewBase.CvCamer
 
         }
     }
+    public native void imageprocessing(long inputImage);
 }
