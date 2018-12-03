@@ -24,13 +24,25 @@
         android:text="" />
 
     <TextView
-        android:id="@+id/text_phone"
+        android:id="@+id/text_Mphone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="" />
+
+    <TextView
+        android:id="@+id/text_Hphone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="" />
 
     <TextView
         android:id="@+id/text_email"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="" />
+
+    <TextView
+        android:id="@+id/text_web"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="" />
