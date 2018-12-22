@@ -8,9 +8,11 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.hardware.SensorManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -34,7 +36,8 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
-import org.opencv.imgproc.Imgproc;
+
+import java.io.IOException;
 
 import static com.bluebead38.opencvtesseractocr.MainActivity.sTess;
 
@@ -42,16 +45,18 @@ import static com.bluebead38.opencvtesseractocr.MainActivity.sTess;
 public class CameraView extends Activity implements CameraBridgeViewBase.CvCameraViewListener2 {
 
     private Mat img_input;
-    private Mat img_output;
+    private Mat img_output = new Mat();
     private static final String TAG = "opencv";
     private CameraBridgeViewBase mOpenCvCameraView;
     private String m_strOcrResult = "";
 
     private Button mBtnOcrStart;
     private Button mBtnFinish;
+    private Button btn_add;
     private TextView mTextOcrResult;
 
     private Bitmap bmp_result;
+    private Bitmap bmp_result1;
 
     private OrientationEventListener mOrientEventListener;
 
@@ -167,6 +172,14 @@ public class CameraView extends Activity implements CameraBridgeViewBase.CvCamer
         mBtnOcrStart = (Button) findViewById(R.id.btn_ocrstart);
         mBtnFinish = (Button) findViewById(R.id.btn_finish);
 
+        /*btn_add = (Button) findViewById(R.id.btn_add);
+        btn_add.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pickImageFromAlbum();
+            }
+        });*/
+
         mTextOcrResult = (TextView) findViewById(R.id.text_ocrresult);
 
         mSurfaceRoi = (SurfaceView) findViewById(R.id.surface_roi);
@@ -243,27 +256,29 @@ public class CameraView extends Activity implements CameraBridgeViewBase.CvCamer
                     mBtnOcrStart.setEnabled(false);
                     mBtnOcrStart.setText("Working...");
                     mBtnOcrStart.setTextColor(Color.LTGRAY);
-                    imageprocessing(img_input.getNativeObjAddr());
+                    imageprocessing(img_input.getNativeObjAddr(), img_output.getNativeObjAddr());
                     bmp_result = Bitmap.createBitmap(img_input.cols(), img_input.rows(), Bitmap.Config.ARGB_8888);
+                    bmp_result1 = Bitmap.createBitmap(img_output.cols(), img_output.rows(), Bitmap.Config.ARGB_8888);
 
                     Utils.matToBitmap(img_input, bmp_result);
+                    Utils.matToBitmap(img_output, bmp_result1);
 
                     // 캡쳐한 이미지를 ROI 영역 안에 표시
                     mImageCapture.setVisibility(View.VISIBLE);
-                    mImageCapture.setImageBitmap(bmp_result);
+                    mImageCapture.setImageBitmap(bmp_result1);
 
 
                     //Orientation에 따라 Bitmap 회전 (landscape일 때는 미수행)
                     if (mCurrOrientHomeButton != mOrientHomeButton.Right) {
                         switch (mCurrOrientHomeButton) {
                             case Bottom:
-                                bmp_result = GetRotatedBitmap(bmp_result, 90);
+                                bmp_result1 = GetRotatedBitmap(bmp_result1, 90);
                                 break;
                             case Left:
-                                bmp_result = GetRotatedBitmap(bmp_result, 180);
+                                bmp_result1 = GetRotatedBitmap(bmp_result1, 180);
                                 break;
                             case Top:
-                                bmp_result = GetRotatedBitmap(bmp_result, 270);
+                                bmp_result1 = GetRotatedBitmap(bmp_result1, 270);
                                 break;
                         }
                     }
@@ -453,5 +468,13 @@ public class CameraView extends Activity implements CameraBridgeViewBase.CvCamer
 
         }
     }
-    public native void imageprocessing(long inputImage);
+    public native void imageprocessing(long inputImage, long outputImage);
+
+    public void pickImageFromAlbum() {
+        Intent intent = new Intent();
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        intent.setType("image/*");
+        startActivityForResult(intent, 111);
+
+    }
 }
